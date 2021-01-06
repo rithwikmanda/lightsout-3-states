@@ -1,0 +1,528 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Lights Out base 3</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+<style>
+    body{
+        background-color: #add8e6;
+    }
+</style>
+</head>
+<body  data-gr-c-s-loaded="true">
+
+<div align="center" class="container"><center>
+<script language="JavaScript1.1" type="text/javascript">
+// <!--version=1.1;// -->
+</script>
+<script language="JavaScript" type="text/javascript">
+// <!--
+if(version==null)
+    document.write("<p><big><big><b>Your browser does not have Javascript 1.1 capabilities. "
+            +"You need Netscape 3+ or MSIE 4+.<\/b><\/big><\/big>");
+//-->
+</script>
+<noscript>
+     <p><big><big><b>Your browser does not have Javascript 1.1 capabilities.
+        You need Netscape 3+ or MSIE 4+.</b></big></big>
+</noscript>
+<script language="JavaScript1.1" type="text/javascript">
+
+var imagedir="images/lights/";
+function preload(){
+    this.length=preload.arguments.length;
+    for (var i=0;i<this.length;i++){
+        this[i]=new Image();
+        this[i].src=imagedir+preload.arguments[i];
+    }
+}
+
+var pics=new preload("lo00.gif","lo10.gif","lo20.gif",
+                     "lo01.gif","lo11.gif","lo21.gif",
+                     "lo02.gif","lo12.gif","lo22.gif",
+                     "lo0.gif","lo1.gif","lo2.gif",
+                     "../buttons/edit.gif","../buttons/edit2.gif",
+                     "../buttons/solve.gif","../buttons/solve2.gif");
+
+var moves;
+var posit = new Array ();
+var hnt = new Array ();
+var mode = 0;   //0=normal  1=solving scrambled  2=edit  3=Hint
+
+// document.writeln("<div class='row'")
+// document.writeln("<div class='col-sm-3'")
+
+// document.write("<a href='javascript:void hint();'><button height=16 width=48>Solve</button><\/a>");
+//   document.write("<a href='javascript:void mix();'><img src='images/buttons/mix.gif' height=16 width=48 border=0><\/a>");
+//   document.write("<a href='javascript:void reset();'><img src='images/buttons/reset.gif' height=16 width=48 border=0><\/a>");
+//   document.write("<a href='javascript:void edit();'><img src='images/buttons/edit.gif' height=16 width=48 border=0 name='edit'><\/a>");
+//   document.write("<a href='javascript:void help();'><img src='images/buttons/help.gif' height=16 width=48 border=0><\/a>");
+//     document.writeln("</div>")
+
+document.writeln("<table cellpadding=0 cellspacing=0 border=0>");
+// document.write("<tr><td colspan=7 align=center>");
+// document.writeln("<form name=puzform>Puzzle:");
+// document.writeln("<select name=puzzle size=1 onChange='initpuz(this.selectedIndex); return false;'>");
+// document.writeln("<option>---");
+// for( var b=1;b<=4;b++){
+//     for( var a=1;a<=25;a++){
+//         document.writeln("<option>Set "+b+" Puzzle "+a);
+//     }
+// }
+// document.writeln("<\/select><\/form><\/td><\/tr>");
+
+document.write("<tr ><td colspan=7>");
+  document.write("<a href='javascript:void hint();'><button class='btn btn-success m-3' height=16 width=48 border=0 name='hint'>Solve</button><\/a>");
+  document.write("<a href='javascript:void mix();'><button class='btn btn-info m-3' height=16 width=48 border=0>Random</button><\/a>");
+  document.write("<a href='javascript:void reset();'><button class='btn btn-warning m-3' height=16 width=48 border=0>Reset</button><\/a>");
+  document.write("<a href='javascript:void edit();'><button id='setbtn' class='btn btn-danger m-3' height=16 width=48 border=0 name='edit'>Set</button><\/a>");
+//   document.write("<a href='javascript:void help();'><img src='images/buttons/help.gif' height=16 width=48 border=0><\/a>");
+  document.writeln("<\/td><\/tr>");
+
+for(var i=0;i<=4;i++){
+    document.writeln("<tr><td width=50><\/td>");
+    for(var j=0;j<=4;j++){
+        document.writeln("  <td><a href='javascript:void clicked("+i+","+j+");'>"+
+            "<img src='"+pics[9].src+"' height=50 width=50 style='margin:2'" +
+            "name='brd"+i+""+j+"' border=0><\/a><\/td>");
+    }
+    document.writeln("<td width=50><\/td><\/tr>");
+}
+document.writeln("<\/table>");
+// document.writeln("</div>")
+
+// document.writeln("</div>")
+function help(){
+    alert("Lights-Out 2000 Help\n\nAim: Press the buttons to turn off the lights.\n"
+        +"Other controls:\n"
+        +"Solve: Show shortest solution.\n"
+        +"Mix:   Randomly mix up the board.\n"
+        +"Reset: Clear the board.\n"
+        +"Edit:  Go to edit mode. Allows you to set up a position to solve. Press Edit again when finished.\n"
+        +"Puzzle: Select one of the 100 built-in puzzles.\n"
+        );
+}
+function initbrd(){
+    for(var i=0;i<=4;i++){
+        posit[i]=new Array(0,0,0,0,0);
+        hnt[i]=new Array(0,0,0,0,0);
+    }
+    moves=0;
+    mode=0;
+    showbrd();
+}
+function initpuz(p){
+    if(p){
+        var c=0;
+        for(var i=0;i<=4;i++) for(var j=0;j<=4;j++){
+            posit[i][j]=puz[p-1][c];
+            hnt[i][j]=0;
+            c++;
+        }
+        moves=0;
+        mode=1;
+        showbrd();
+    }
+}
+function draw(y,x){
+    var c=0;
+    if(x>=0 && y>=0 && y<=4 && x<=4){
+        c=posit[y][x];
+        if(mode==3){
+            c+=hnt[y][x]*3;
+        }else c+=9;
+        document.images["brd"+y+""+x].src=pics[c].src;
+    }
+}
+function showbrd(){
+    //rewrites all images on screen.
+    for(var i=0;i<=4;i++) for(var j=0;j<=4;j++) {
+        var c=posit[i][j];
+        if(mode==3) c+=hnt[i][j]*3;
+        else c+=9;
+        document.images["brd"+i+""+j].src=pics[c].src;
+    }
+    if(mode==2) document.getElementById("setbtn").setAttribute("style", "color: blue");
+    else document.getElementById("setbtn").setAttribute("style", "");
+    if(mode==3) document.images["hint"].src=pics[15].src;
+    else document.images["hint"].src=pics[14].src;
+}
+function onResize(){
+    showbrd();
+}
+
+initbrd();
+
+function reset(){
+    //clear board
+    mode=0;
+    initbrd();
+}
+function domove(y,x,k,h){
+    //Do proper move. Update screen if k set. Adjust hnt if h set.
+    if(h) {     //change hint marker
+        if(hnt[y][x]<2) hnt[y][x]++; else hnt[y][x]=0;
+    }
+    changelight(y,x,k);
+    changelight(y,x-1,k);
+    changelight(y,x+1,k);
+    changelight(y-1,x,k);
+    changelight(y+1,x,k);
+}
+function changelight(y,x,k){
+    //change single light. Update screen if k set
+    if(y>=0 && y<=4 && x>=0 && x<=4){
+        posit[y][x]++;
+        if(posit[y][x]==3) posit[y][x]=0;
+        if(k) draw(y,x);
+    }
+}
+function clicked(y,x){
+    //clicked on cell (y,x)
+    if(mode==2){
+        //editing, so just toggle one light
+        changelight(y,x,1);
+    }else{
+        //Do normal move
+        domove(y,x,1,(mode==3)?1:0);
+        moves++;
+        if(mode==1 && solved()){
+            alert("You solved it in "+moves+" moves.\nYou don't get a prize for this though!");
+            mode=0;
+        }
+    }
+    this.focus();
+}
+function solved(){
+    //Check if board is solved
+    for(var i=0;i<=4;i++){
+        for(var j=0;j<=4;j++){
+            if(posit[i][j]) return(false);
+        }
+    }
+    return(true);
+}
+
+function mix(){
+    //set up random position.
+    initbrd();
+    for(var i=0;i<=4;i++){
+        for(var j=0;j<=4;j++){
+            var d=Math.floor(Math.random()*3);
+            //press button d times
+            while(d){
+                domove(i,j,0,0);
+                d--;
+            }
+        }
+    }
+    mode=1;
+    moves=0;
+    showbrd();
+}
+
+
+function edit(){
+    // Edit button clicked
+    if(mode==2) {
+        // end editing should check for solubility
+        if(hintson()){
+            mode=1;
+            showbrd();
+        }
+        if(!hintson())
+            alert("This position cannot be solved!")
+    }else {
+        //start editing
+        mode=2;
+        showbrd();
+    }
+}
+
+function hint(){
+    //hint button clicked
+    if(mode==3) {
+        // switch off hints
+        mode=0;
+        showbrd();
+    }else if(mode!=2){
+        //switch hints on
+        if(hintson()) mode=3;
+        showbrd();
+    }
+}
+
+function solvbot(h){
+    // solve board till bottom row. If h set then adjust hnt accordingly
+    for(i=1;i<=4;i++){
+        for(j=0;j<=4;j++){
+            var c=posit[i-1][j];
+            if(c) c=3-c;
+            while(c){
+                domove(i,j,0,h);
+                c--;
+            }
+        }
+    }
+}
+function hintson(){
+    //Find solution, and put it into hnt array
+    //Board remains unchanged.
+    //If no solution found, then return false, else return true
+
+    //backup board, and set board to accept hints
+    var backup = new Array();
+    for(var i=0;i<=4;i++){
+        backup[i]=new Array();
+        for(var j=0;j<=4;j++){
+            backup[i][j]=posit[i][j];
+            hnt[i][j]=0;
+        }
+    }
+
+    //solve board up to last row
+    solvbot(1);
+
+    //save bottom row vector
+    var aim = new Array();
+    for(var i=0;i<=4;i++) aim[i]=posit[4][i];
+
+    //Get matrix of bottom rows for each possible top light
+    var bot = new Array ();
+        bot[0]=new Array(0,1,0,0,0);
+        bot[1]=new Array(1,1,0,0,0);
+    var inv = new Array ();
+        inv[0]=new Array(1,0,2,0,1);
+        inv[1]=new Array(0,1,0,1,0);
+
+    //Now try to make aim from inv rows, by pressing the bot pattern on top row
+    for(var m=0;m<2;m++){       //current row
+        while(aim[m]){
+            //add inv[m] to aim, and apply bot[m] to top row
+            for(var i=0;i<=4;i++){
+                aim[i]+=inv[m][i]; if(aim[i]>=3) aim[i]-=3;
+                for(var j=1;j<=bot[m][i];j++) domove(0,i,0,1);
+            }
+        }
+    }
+    //Error if aim has not been attained
+    if(aim[2]+aim[3]+aim[4]){
+        //restore board
+        for(var i=0;i<=4;i++) for(var j=0;j<=4;j++) posit[i][j]=backup[i][j];
+        return(false);
+    }
+    //Expand solution to full board
+    solvbot(1);
+
+    //Should now check whether can minimise solution by adding a quiet pattern
+    aim=counthnt();
+    //save current position
+    var backhnt=new Array;
+    for(var i=0;i<=4;i++){
+        backhnt[i]=new Array();
+        for(var j=0;j<=4;j++) backhnt[i][j]=hnt[i][j];
+    }
+
+    //get complete quiet pattern generators
+    var invar= new Array();
+    invar[0]=new Array();
+         invar[0][0]=new Array(1,0,0,0,2);
+         invar[0][1]=new Array(2,2,0,1,1);
+         invar[0][2]=new Array(1,2,0,1,2);
+         invar[0][3]=new Array(1,1,0,2,2);
+         invar[0][4]=new Array(0,2,0,1,0);
+    invar[1]=new Array();
+         invar[1][0]=new Array(0,1,0,2,0);
+         invar[1][1]=new Array(2,2,0,1,1);
+         invar[1][2]=new Array(2,1,0,2,1);
+         invar[1][3]=new Array(1,1,0,2,2);
+         invar[1][4]=new Array(2,0,0,0,1);
+    invar[2]=new Array();
+         invar[2][0]=new Array(0,0,1,0,1);
+         invar[2][1]=new Array(0,2,2,1,2);
+         invar[2][2]=new Array(1,2,0,1,2);
+         invar[2][3]=new Array(0,1,1,2,1);
+         invar[2][4]=new Array(1,2,2,1,1);
+
+    //run through all non-zero combinations of the quiet patterns.
+    for(var c0=0;c0<=2;c0++){
+    for(var c1=0;c1<=2;c1++){
+    for(var c2=0;c2<=2;c2++){
+        //check combination c012; each c is multiplier for generator
+        for(var i=0;i<=4;i++) for(var j=0;j<=4;j++){
+            var c=backhnt[i][j]+c0*invar[0][i][j]+c1*invar[1][i][j]+c2*invar[2][i][j];
+            hnt[i][j]=c-3*Math.floor(c/3)
+
+        }
+        //check if found better solution
+        j=counthnt();
+        if(j<aim){
+            aim=j;
+            for(var i=0;i<=4;i++) for(var j=0;j<=4;j++) backhnt[i][j]=hnt[i][j];
+        }
+    }}}
+    //restore hnt
+    for(var i=0;i<=4;i++) for(var j=0;j<=4;j++) {
+        if(backhnt[i][j]) hnt[i][j]=3-backhnt[i][j]; else hnt[i][j]=0;
+    }
+    //restore board
+    for(var i=0;i<=4;i++) for(var j=0;j<=4;j++) posit[i][j]=backup[i][j];
+    return(true);
+}
+
+//used to quickly count number of bits set.
+function counthnt(){
+    //count number of buttons pressed, i.e. sum of entries in hnt.
+    var c=0;
+    for(var i=0;i<=4;i++) for(var j=0;j<=4;j++){
+        c+=hnt[i][j];
+    }
+    return(c);
+}
+// -->
+</script><table cellpadding="0" cellspacing="0" border="0" style="visibility:hidden;">
+<tbody><tr><td colspan="7" align="center"><form name="puzform">Puzzle:
+<select name="puzzle" size="1" onchange="initpuz(this.selectedIndex); return false;">
+<option>---
+</option><option>Set 1 Puzzle 1
+</option><option>Set 1 Puzzle 2
+</option><option>Set 1 Puzzle 3
+</option><option>Set 1 Puzzle 4
+</option><option>Set 1 Puzzle 5
+</option><option>Set 1 Puzzle 6
+</option><option>Set 1 Puzzle 7
+</option><option>Set 1 Puzzle 8
+</option><option>Set 1 Puzzle 9
+</option><option>Set 1 Puzzle 10
+</option><option>Set 1 Puzzle 11
+</option><option>Set 1 Puzzle 12
+</option><option>Set 1 Puzzle 13
+</option><option>Set 1 Puzzle 14
+</option><option>Set 1 Puzzle 15
+</option><option>Set 1 Puzzle 16
+</option><option>Set 1 Puzzle 17
+</option><option>Set 1 Puzzle 18
+</option><option>Set 1 Puzzle 19
+</option><option>Set 1 Puzzle 20
+</option><option>Set 1 Puzzle 21
+</option><option>Set 1 Puzzle 22
+</option><option>Set 1 Puzzle 23
+</option><option>Set 1 Puzzle 24
+</option><option>Set 1 Puzzle 25
+</option><option>Set 2 Puzzle 1
+</option><option>Set 2 Puzzle 2
+</option><option>Set 2 Puzzle 3
+</option><option>Set 2 Puzzle 4
+</option><option>Set 2 Puzzle 5
+</option><option>Set 2 Puzzle 6
+</option><option>Set 2 Puzzle 7
+</option><option>Set 2 Puzzle 8
+</option><option>Set 2 Puzzle 9
+</option><option>Set 2 Puzzle 10
+</option><option>Set 2 Puzzle 11
+</option><option>Set 2 Puzzle 12
+</option><option>Set 2 Puzzle 13
+</option><option>Set 2 Puzzle 14
+</option><option>Set 2 Puzzle 15
+</option><option>Set 2 Puzzle 16
+</option><option>Set 2 Puzzle 17
+</option><option>Set 2 Puzzle 18
+</option><option>Set 2 Puzzle 19
+</option><option>Set 2 Puzzle 20
+</option><option>Set 2 Puzzle 21
+</option><option>Set 2 Puzzle 22
+</option><option>Set 2 Puzzle 23
+</option><option>Set 2 Puzzle 24
+</option><option>Set 2 Puzzle 25
+</option><option>Set 3 Puzzle 1
+</option><option>Set 3 Puzzle 2
+</option><option>Set 3 Puzzle 3
+</option><option>Set 3 Puzzle 4
+</option><option>Set 3 Puzzle 5
+</option><option>Set 3 Puzzle 6
+</option><option>Set 3 Puzzle 7
+</option><option>Set 3 Puzzle 8
+</option><option>Set 3 Puzzle 9
+</option><option>Set 3 Puzzle 10
+</option><option>Set 3 Puzzle 11
+</option><option>Set 3 Puzzle 12
+</option><option>Set 3 Puzzle 13
+</option><option>Set 3 Puzzle 14
+</option><option>Set 3 Puzzle 15
+</option><option>Set 3 Puzzle 16
+</option><option>Set 3 Puzzle 17
+</option><option>Set 3 Puzzle 18
+</option><option>Set 3 Puzzle 19
+</option><option>Set 3 Puzzle 20
+</option><option>Set 3 Puzzle 21
+</option><option>Set 3 Puzzle 22
+</option><option>Set 3 Puzzle 23
+</option><option>Set 3 Puzzle 24
+</option><option>Set 3 Puzzle 25
+</option><option>Set 4 Puzzle 1
+</option><option>Set 4 Puzzle 2
+</option><option>Set 4 Puzzle 3
+</option><option>Set 4 Puzzle 4
+</option><option>Set 4 Puzzle 5
+</option><option>Set 4 Puzzle 6
+</option><option>Set 4 Puzzle 7
+</option><option>Set 4 Puzzle 8
+</option><option>Set 4 Puzzle 9
+</option><option>Set 4 Puzzle 10
+</option><option>Set 4 Puzzle 11
+</option><option>Set 4 Puzzle 12
+</option><option>Set 4 Puzzle 13
+</option><option>Set 4 Puzzle 14
+</option><option>Set 4 Puzzle 15
+</option><option>Set 4 Puzzle 16
+</option><option>Set 4 Puzzle 17
+</option><option>Set 4 Puzzle 18
+</option><option>Set 4 Puzzle 19
+</option><option>Set 4 Puzzle 20
+</option><option>Set 4 Puzzle 21
+</option><option>Set 4 Puzzle 22
+</option><option>Set 4 Puzzle 23
+</option><option>Set 4 Puzzle 24
+</option><option>Set 4 Puzzle 25
+</option></select></form></td></tr>
+<tr><td colspan="7"><a href="javascript:void hint();"><img src="./Lights Out 2000_files/solve.gif" height="16" width="48" border="0" name="hint"></a><a href="javascript:void mix();"><img src="./Lights Out 2000_files/mix.gif" height="16" width="48" border="0"></a><a href="javascript:void reset();"><img src="./Lights Out 2000_files/reset.gif" height="16" width="48" border="0"></a><a href="javascript:void edit();"><img src="./Lights Out 2000_files/edit.gif" height="16" width="48" border="0" name="edit"></a><a href="javascript:void help();"><img src="./Lights Out 2000_files/help.gif" height="16" width="48" border="0"></a></td></tr>
+<tr><td width="50"></td>
+  <td><a href="javascript:void clicked(0,0);"><img src="./Lights Out 2000_files/lo1.gif" height="28" width="28" name="brd00" border="0"></a></td>
+  <td><a href="javascript:void clicked(0,1);"><img src="./Lights Out 2000_files/lo1.gif" height="28" width="28" name="brd01" border="0"></a></td>
+  <td><a href="javascript:void clicked(0,2);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd02" border="0"></a></td>
+  <td><a href="javascript:void clicked(0,3);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd03" border="0"></a></td>
+  <td><a href="javascript:void clicked(0,4);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd04" border="0"></a></td>
+<td width="50"></td></tr>
+<tr><td width="50"></td>
+  <td><a href="javascript:void clicked(1,0);"><img src="./Lights Out 2000_files/lo1.gif" height="28" width="28" name="brd10" border="0"></a></td>
+  <td><a href="javascript:void clicked(1,1);"><img src="./Lights Out 2000_files/lo2.gif" height="28" width="28" name="brd11" border="0"></a></td>
+  <td><a href="javascript:void clicked(1,2);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd12" border="0"></a></td>
+  <td><a href="javascript:void clicked(1,3);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd13" border="0"></a></td>
+  <td><a href="javascript:void clicked(1,4);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd14" border="0"></a></td>
+<td width="50"></td></tr>
+<tr><td width="50"></td>
+  <td><a href="javascript:void clicked(2,0);"><img src="./Lights Out 2000_files/lo2.gif" height="28" width="28" name="brd20" border="0"></a></td>
+  <td><a href="javascript:void clicked(2,1);"><img src="./Lights Out 2000_files/lo2.gif" height="28" width="28" name="brd21" border="0"></a></td>
+  <td><a href="javascript:void clicked(2,2);"><img src="./Lights Out 2000_files/lo2.gif" height="28" width="28" name="brd22" border="0"></a></td>
+  <td><a href="javascript:void clicked(2,3);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd23" border="0"></a></td>
+  <td><a href="javascript:void clicked(2,4);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd24" border="0"></a></td>
+<td width="50"></td></tr>
+<tr><td width="50"></td>
+  <td><a href="javascript:void clicked(3,0);"><img src="./Lights Out 2000_files/lo1.gif" height="28" width="28" name="brd30" border="0"></a></td>
+  <td><a href="javascript:void clicked(3,1);"><img src="./Lights Out 2000_files/lo2.gif" height="28" width="28" name="brd31" border="0"></a></td>
+  <td><a href="javascript:void clicked(3,2);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd32" border="0"></a></td>
+  <td><a href="javascript:void clicked(3,3);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd33" border="0"></a></td>
+  <td><a href="javascript:void clicked(3,4);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd34" border="0"></a></td>
+<td width="50"></td></tr>
+<tr><td width="50"></td>
+  <td><a href="javascript:void clicked(4,0);"><img src="./Lights Out 2000_files/lo1.gif" height="28" width="28" name="brd40" border="0"></a></td>
+  <td><a href="javascript:void clicked(4,1);"><img src="./Lights Out 2000_files/lo1.gif" height="28" width="28" name="brd41" border="0"></a></td>
+  <td><a href="javascript:void clicked(4,2);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd42" border="0"></a></td>
+  <td><a href="javascript:void clicked(4,3);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd43" border="0"></a></td>
+  <td><a href="javascript:void clicked(4,4);"><img src="./Lights Out 2000_files/lo0.gif" height="28" width="28" name="brd44" border="0"></a></td>
+<td width="50"></td></tr>
+</tbody></table>
+
+</center></div>
+
+
+</body></html>
